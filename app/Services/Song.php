@@ -5,22 +5,37 @@ namespace App\Services;
 use App\Contracts\iSongRepository;
 use App\Models\Song as SongModel;
 
-use Illuminate\Support\Facades\DB;
-use simplehtmldom\HtmlWeb;
-
 class Song implements iSongRepository{
     public string $song_name = '';
     public string $song_infos = '';
     public string $song_url = '';
     public string $artist_name = '';
-    public string $added_at = '';
+    public int $playlist_id;
+
+    public function __construct(private ?SongfactsScraper $scraper = null){
+        $this->scraper = $scraper ?? new SongfactsScraper();
+    }
 
     public function create(string $url): self{
-
         $this->song_url = $url;
-        // scraper SimpleHTMLDom will be applied here
-        return $this;
 
+        // Slug extraction from URL 
+        $path = parse_url($url, PHP_URL_PATH);
+        $segments = array_values(array_filter(explode('/', $path)));
+
+        if (count($segments) >= 3 && $segments[0] === 'facts') {
+            $artistSlug = $segments[1];
+            $songSlug = $segments[2];
+
+            $data = $this->scraper->scrapeSongFacts($artistSlug, $songSlug);
+            if ($data) {
+                $this->song_name   = $data['song_name'];
+                $this->artist_name = $data['artist_name'];
+                $this->song_infos  = $data['song_infos'];
+            }
+        }
+
+        return $this;
         /*
         $doc = new HtmlWeb();
         $html = $doc->load($url);
@@ -49,37 +64,24 @@ class Song implements iSongRepository{
 
     public function save(): bool{
         return (bool) SongModel::create([
+            'playlist_id' => $this->playlist_id,
             'song_name' => $this->song_name,
             'artist_name' => $this->artist_name,
             'song_infos' => $this->song_infos,
             'song_url' => $this->song_url,
-            'added_at' => $this->added_at,
         ]);
-        /*
-        return DB::table('songs')->insert([
-            'song_name' => $this->song_name,
-            'artist_name' => $this->artist_name,
-            'song_infos' => $this->song_infos,
-            'song_url' => $this->song_url,
-            'added_at' => $this->added_at,
-            'updated_at' => now()->toDateTimeString(),
-        ]);*/
     }
 
     public function read(): array{
         return SongModel::all()->toArray();
-        //return DB::table('songs')->get()->toArray();
     }
 
     public function update(int $id, array $data): bool{
         $song = SongModel::find($id);
         return $song ? $song->update($data) : false;
-        /*$data['updated_at'] = now()->toDateTimeString();
-        return DB::table('songs')->where('id', $id)->update($data);*/
     }
 
     public function delete(int $id): bool{
         return (bool) SongModel::destroy($id);
-        //return DB::table('songs')->where('id', $id)->delete();
     }
 }
