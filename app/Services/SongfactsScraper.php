@@ -68,13 +68,11 @@ class SongfactsScraper{
             foreach ($factNodes as $li) { // Each fact = <li>...</li>
                 $inner = $li->find('.inner', 0); // Keep the <div class="inner">...</div> content
                 if ($inner) {
-                    // Remove unwanted tags (div, span, a) from the inner content
+                    // Remove unwanted tags (div, span) from the inner content
                     foreach ($inner->find('div') as $div) 
                         $div->outertext = '';
                     foreach($inner->find('span') as $span) 
                         $span->outertext = '';
-                    foreach($inner->find('a') as $a) 
-                        $a->outertext = '';
                     
                     $rawHTML = $inner->outertext;
                     $text = trim(strip_tags($rawHTML));
@@ -110,14 +108,11 @@ class SongfactsScraper{
      * @param string $query
      * @return array
      */
-    public function searchProposals(string $query): array{
-        $slugQuery = Str::slug($query);
+    public function searchProposals(?string $artist = null, ?string $song = null, ?string $query = null): array{
 
-        // Try to resolve directly if "Artist Song" format
-        $parts = explode('-', $slugQuery);
-        if(count($parts) >= 2){
-            $artistSlug = $parts[0];
-            $songSlug = implode('-', array_slice($parts, 1));
+        if(!empty(trim($artist ?? '')) && !empty(trim($song ?? ''))){
+            $artistSlug = Str::slug($artist);
+            $songSlug = Str::slug($song);
 
             $directData = $this->scrapeSongFacts($artistSlug,$songSlug);
             if($directData)
@@ -126,6 +121,10 @@ class SongfactsScraper{
                 'data' => $directData,
                 ];
         }
+
+        $searchQuery = $query ?: trim("{$artist} {$song}");
+        if(empty($searchQuery))
+            return ['direct' => false, 'proposals' => []];
 
         // Fallback: research results scraping
         $searchUrl = "{$this->baseURL}/search/songs/" . urlencode($query);

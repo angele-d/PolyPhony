@@ -30,21 +30,33 @@
                 </div>
             @endif
 
-            {{-- Moteur de Recherche Intelligente Songfacts (Alpine.js) --}}
+            {{-- Moteur de Recherche Intelligente Songfacts avec validation par bouton --}}
             <div class="bg-white p-6 shadow-sm sm:rounded-lg border-2 border-indigo-100" 
-                 x-data="{
-                    query: '',
+                x-data="{
+                    artist: '',
+                    song: '',
                     loading: false,
                     directData: null,
                     proposals: [],
+                    errorMessage: '',
                     search() {
-                        if (this.query.length < 2) {
-                            this.proposals = [];
-                            this.directData = null;
+                        this.errorMessage = '';
+                        
+                        if (!this.artist.trim() || !this.song.trim()) {
+                            this.errorMessage = 'Veuillez remplir à la fois l\'artiste et le morceau.';
                             return;
                         }
+
                         this.loading = true;
-                        fetch('{{ route('search.songfacts') }}?q=' + encodeURIComponent(this.query))
+                        this.directData = null;
+                        this.proposals = [];
+
+                        const params = new URLSearchParams({
+                            artist: this.artist.trim(),
+                            song: this.song.trim()
+                        });
+
+                        fetch('{{ route('search.songfacts') }}?' + params.toString())
                             .then(res => res.json())
                             .then(data => {
                                 this.loading = false;
@@ -54,34 +66,65 @@
                                 } else {
                                     this.directData = null;
                                     this.proposals = data.proposals || [];
+                                    if (this.proposals.length === 0) {
+                                        this.errorMessage = 'Aucun résultat direct ni suggestion trouvée sur Songfacts.';
+                                    }
                                 }
                             })
-                            .catch(() => { this.loading = false; });
+                            .catch(() => { 
+                                this.loading = false; 
+                                this.errorMessage = 'Une erreur s\'est produite lors de la recherche.';
+                            });
                     }
-                 }">
-                <h3 class="text-lg font-bold text-gray-800 mb-2">🔍 Recherche & Extraction Songfacts</h3>
-                <p class="text-sm text-gray-500 mb-4">Tapez le nom d'un artiste et un morceau (ex: <i>"Coldplay Yellow"</i>) pour importer les détails automatiquement.</p>
+                }">
+                
+                <h3 class="text-lg font-bold text-gray-800 mb-1">🔍 Recherche & Extraction Songfacts</h3>
+                <p class="text-sm text-gray-500 mb-4">Renseignez l'artiste et le morceau puis cliquez sur <b>Rechercher</b> (ou appuyez sur Entrée).</p>
 
-                <div class="relative">
-                    <input type="text" 
-                           x-model="query" 
-                           @input.debounce.400ms="search()" 
-                           placeholder="Ex: Queen Bohemian Rhapsody..." 
-                           class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 pr-10">
-                    <div x-show="loading" class="absolute right-3 top-3 text-xs text-indigo-600 font-semibold">
-                        Recherche...
+                {{-- Formulaire d'envoi synchrone des deux champs --}}
+                <form @submit.prevent="search()" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Artiste / Groupe</label>
+                            <input type="text" 
+                                x-model="artist" 
+                                placeholder="Ex: Imagine Dragons / Coldplay" 
+                                class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Morceau</label>
+                            <input type="text" 
+                                x-model="song" 
+                                placeholder="Ex: Sharks / Yellow" 
+                                class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
                     </div>
-                </div>
+
+                    {{-- Message d'erreur local --}}
+                    <template x-if="errorMessage">
+                        <p class="text-xs text-red-600 font-semibold" x-text="errorMessage"></p>
+                    </template>
+
+                    <div class="flex justify-end">
+                        <button type="submit" 
+                                :disabled="loading" 
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-5 rounded-md text-sm shadow-sm transition flex items-center gap-2">
+                            <span x-show="!loading">🔍 Rechercher sur Songfacts</span>
+                            <span x-show="loading">Recherche en cours...</span>
+                        </button>
+                    </div>
+                </form>
 
                 {{-- Résultat Direct Trouvé --}}
                 <template x-if="directData">
                     <div class="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
-                        <div class="font-bold text-green-900" x-text="directData.song_name + ' — ' + directData.artist_name"></div>
+                        <div class="font-bold text-green-900 text-base" x-text="directData.artist_name + ' — ' + directData.song_name"></div>
                         <p class="text-xs text-gray-600 mt-1 line-clamp-3" x-text="directData.song_infos"></p>
                         <form action="{{ route('playlists.songs.add-scraped', $playlist) }}" method="POST" class="mt-3">
                             @csrf
                             <input type="hidden" name="source_url" :value="directData.source_url">
-                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-gray-800 font-bold py-1 px-3 rounded text-sm">
+                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1.5 px-4 rounded text-xs shadow-sm">
                                 + Ajouter cette chanson à la playlist
                             </button>
                         </form>
@@ -90,14 +133,15 @@
 
                 {{-- Propositions d'autocomplétion si non direct --}}
                 <template x-if="!directData && proposals.length > 0">
-                    <div class="mt-3 bg-white border rounded-md shadow-lg divide-y">
+                    <div class="mt-4 bg-white border rounded-md shadow-lg divide-y">
+                        <div class="p-2 bg-gray-50 text-xs font-semibold text-gray-500">Suggestions associées :</div>
                         <template x-for="item in proposals" :key="item.url">
                             <div class="p-3 hover:bg-indigo-50 flex justify-between items-center">
                                 <span class="text-sm font-medium text-gray-800" x-text="item.title"></span>
                                 <form action="{{ route('playlists.songs.add-scraped', $playlist) }}" method="POST">
                                     @csrf
                                     <input type="hidden" name="source_url" :value="item.url">
-                                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-gray-800 text-xs font-semibold py-1 px-2 rounded">
+                                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-1 px-3 rounded">
                                         Extraire & Importer
                                     </button>
                                 </form>
@@ -108,22 +152,36 @@
             </div>
 
             {{-- Liste des chansons déjà importées --}}
-            <div class="bg-white p-6 shadow-sm sm:rounded-lg">
+            <div class="bg-white p-6 shadow-sm sm:rounded-lg mt-6">
                 <h3 class="text-lg font-bold text-gray-800 mb-4">Chansons dans la Playlist ({{ $playlist->songs->count() }})</h3>
                 
                 <div class="space-y-6">
                     @forelse ($playlist->songs as $song)
-                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-5 shadow-sm">
+                        @php
+                            $rawInfos = $song->song_infos;
+                            if (is_array($rawInfos)) {
+                                $facts = $rawInfos;
+                            } else {
+                                $facts = array_filter(array_map('trim', explode("\n\n", (string) $rawInfos)));
+                            }
+                        @endphp
+
+                        {{-- Composant Carte Morceau avec Alpine.js --}}
+                        <div x-data="{ open: true }" class="bg-gray-50 border border-gray-200 rounded-lg p-5 shadow-sm">
                             
-                            {{-- Ligne du haut : Artiste, Morceau, Lien Source & Bouton Supprimer --}}
-                            <div class="flex flex-row items-center justify-between w-full pb-3 mb-4 border-b border-gray-200 gap-4">
-                                <div class="text-base text-gray-800">
+                            {{-- Ligne du haut --}}
+                            <div class="flex flex-row items-center justify-between w-full transition-all duration-150 gap-4"
+                                 :class="open ? 'pb-3 mb-4 border-b border-gray-200' : 'pb-0 mb-0 border-b-0'">
+                                
+                                {{-- Artiste et Titre (espace à gauche via pl-3) --}}
+                                <div class="text-base text-gray-800 truncate pl-3">
                                     <span class="font-bold text-gray-900">Artist:</span> {{ $song->artist_name }} 
                                     <span class="text-gray-400 mx-2">|</span> 
                                     <span class="font-bold text-gray-900">Song:</span> {{ $song->song_name }}
                                 </div>
                                 
-                                <div class="flex items-center space-x-4 shrink-0">
+                                {{-- Actions à droite --}}
+                                <div class="flex items-center space-x-3 shrink-0">
                                     @if($song->source_url)
                                         <a href="{{ $song->source_url }}" target="_blank" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline flex items-center gap-1">
                                             URL
@@ -133,16 +191,34 @@
                                     <form action="{{ route('songs.destroy', $song) }}" method="POST" onsubmit="return confirm('Voulez-vous vraiment supprimer cette chanson de la playlist ?');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="bg-red-500 hover:bg-red-600 text-red text-xs font-semibold py-1.5 px-3 rounded shadow-sm transition">
+                                        <button type="submit" class="bg-red-500 hover:bg-red-600 text-white text-xs font-semibold py-1.5 px-3 rounded shadow-sm transition">
                                             Delete
                                         </button>
                                     </form>
+
+                                    {{-- Bouton Flèche Agrandir / Réduire --}}
+                                    <button type="button" 
+                                            @click="open = !open" 
+                                            class="bg-gray-200 hover:bg-gray-300 text-gray-700 p-1.5 rounded transition flex items-center justify-center"
+                                            title="Agrandir / Réduire">
+                                        <svg class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': !open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </button>
                                 </div>
+
                             </div>
 
-                            {{-- Section des Facts (1 ligne vide entre chaque grâce aux \n\n et whitespace-pre-line) --}}
-                            <div class="text-sm text-gray-700 whitespace-pre-line leading-relaxed pl-1">
-                                {{ $song->song_infos }}
+                            {{-- Bloc des Facts (Affiché / Masqué avec Alpine) --}}
+                            <div x-show="open" class="space-y-4 pl-3">
+                                @forelse($facts as $fact)
+                                    <div class="flex items-start gap-2.5">
+                                        <span class="text-indigo-500 font-bold text-base leading-none select-none">•</span>
+                                        <p class="text-sm text-gray-700 leading-relaxed">{{ preg_replace('/^[\s•\-\*]+/u', '', $fact) }}</p>
+                                    </div>
+                                @empty
+                                    <p class="text-sm text-gray-400 italic">Aucune anecdote disponible pour cette chanson.</p>
+                                @endforelse
                             </div>
 
                         </div>

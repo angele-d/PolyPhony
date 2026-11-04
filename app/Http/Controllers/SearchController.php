@@ -17,12 +17,14 @@ class SearchController extends Controller
      */
     public function autocomplete(Request $request): JsonResponse
     {
+        $artist = $request->input('artist', '');
+        $song = $request->input('song', '');
         $query = $request->input('q', '');
-        if (strlen($query) < 2) {
+        if (empty(trim($artist)) && empty(trim($song)) && strlen(trim($query)) < 2) {
             return response()->json(['direct' => false, 'proposals' => []]);
         }
 
-        $result = $this->scraper->searchProposals($query);
+        $result = $this->scraper->searchProposals($artist, $song, $query);
         return response()->json($result);
     }
 
