@@ -47,6 +47,6 @@ class User extends Authenticatable
     public function contributedPlaylists(): BelongsToMany
     {
         return $this->belongsToMany(Playlist::class, 'playlist_user')
-                -> withPivot('added_at');
+                ->withPivot('added_at');
     }
 }
