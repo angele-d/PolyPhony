@@ -65,3 +65,50 @@ Install the simplehtmldom library:
 composer require simplehtmldom/simplehtmldom:2.0-RC2
 ```
 
+## Step 6: Generate Laravel Composants via Artisan
+
+```bash
+# 1: Main models + migrations
+php artisan make:model Playlist -m
+php artisan make:model Song -m
+php artisan make:model Singer -m
+php artisan make:model Timeline -m
+php artisan make:model Document -m
+
+# 2: Migration for the pivot table of the team (Playlist <-> User)
+php artisan make:migration create_playlist_user_table --create=playlist_user
+
+# 3: Application controllers
+php artisan make:controller PlaylistController
+php artisan make:controller SongController
+php artisan make:controller SingerController
+php artisan make:controller TimelineController
+php artisan make:controller SearchController
+php artisan make:controller DocumentController
+php artisan make:controller BackupController
+php artisan make:controller XmlImportController
+
+# 4: Policy for differencing the access to the projects (Administrateur vs Contributeurs)
+php artisan make:policy PlaylistPolicy --model=Playlist
+```
+
+## Step 7: Create repositories for personalized OOP and encrypted storage
+
+```bash
+mkdir -p app/Contracts app/Services
+mkdir -p storage/app/encrypted_docs
+```
+
+Contracts will contain:
+- iSongRepository.php
+
+Services will contain:
+- Song.php
+
+## Step 8: Create the database tables
+
+Change the migration files in `database/migrations` to add the necessary fields for the `projects`, `songs`, `singers`, `timelines`, and `documents` tables. Then run the migrations:
+
+```bash
+php artisan migrate:fresh
+```
