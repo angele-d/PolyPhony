@@ -111,17 +111,40 @@
             <div class="bg-white p-6 shadow-sm sm:rounded-lg">
                 <h3 class="text-lg font-bold text-gray-800 mb-4">Chansons dans la Playlist ({{ $playlist->songs->count() }})</h3>
                 
-                <div class="space-y-4">
+                <div class="space-y-6">
                     @forelse ($playlist->songs as $song)
-                        <div class="border p-4 rounded-md flex justify-between items-start">
-                            <div>
-                                <h4 class="font-bold text-gray-900">{{ $song->song_name }}</h4>
-                                <div class="text-xs text-indigo-600 font-semibold mb-2">{{ $song->artist_name }}</div>
-                                <p class="text-xs text-gray-600 whitespace-pre-line max-h-32 overflow-y-auto">{{ $song->song_infos }}</p>
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-5 shadow-sm">
+                            
+                            {{-- Ligne du haut : Artiste, Morceau, Lien Source & Bouton Supprimer --}}
+                            <div class="flex flex-row items-center justify-between w-full pb-3 mb-4 border-b border-gray-200 gap-4">
+                                <div class="text-base text-gray-800">
+                                    <span class="font-bold text-gray-900">Artist:</span> {{ $song->artist_name }} 
+                                    <span class="text-gray-400 mx-2">|</span> 
+                                    <span class="font-bold text-gray-900">Song:</span> {{ $song->song_name }}
+                                </div>
+                                
+                                <div class="flex items-center space-x-4 shrink-0">
+                                    @if($song->source_url)
+                                        <a href="{{ $song->source_url }}" target="_blank" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline flex items-center gap-1">
+                                            URL
+                                        </a>
+                                    @endif
+
+                                    <form action="{{ route('songs.destroy', $song) }}" method="POST" onsubmit="return confirm('Voulez-vous vraiment supprimer cette chanson de la playlist ?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="bg-red-500 hover:bg-red-600 text-red text-xs font-semibold py-1.5 px-3 rounded shadow-sm transition">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
-                            <a href="{{ $song->source_url }}" target="_blank" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-1 px-2 rounded whitespace-nowrap">
-                                Source Songfacts &rarr;
-                            </a>
+
+                            {{-- Section des Facts (1 ligne vide entre chaque grâce aux \n\n et whitespace-pre-line) --}}
+                            <div class="text-sm text-gray-700 whitespace-pre-line leading-relaxed pl-1">
+                                {{ $song->song_infos }}
+                            </div>
+
                         </div>
                     @empty
                         <p class="text-sm text-gray-400 italic">Aucune chanson dans cette playlist pour le moment.</p>
