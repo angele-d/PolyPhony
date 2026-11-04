@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Song extends Model
 {
@@ -18,4 +19,13 @@ class Song extends Model
         'added_at',
         'updated_at'
     ];
+
+    /**
+     * Get the playlist that owns the song.
+     * @return BelongsTo
+     */
+    public function playlist(): BelongsTo
+    {
+        return $this->belongsTo(Playlist::class);
+    }
 }
