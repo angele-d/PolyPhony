@@ -30,9 +30,10 @@
                 </div>
             @endif
 
-            {{-- Moteur de Recherche Intelligente Songfacts avec validation par bouton --}}
+            {{-- Moteur de Recherche Intelligente Songfacts (Chanson / Artiste) --}}
             <div class="bg-white p-6 shadow-sm sm:rounded-lg border-2 border-indigo-100" 
                 x-data="{
+                    type: 'song',
                     artist: '',
                     song: '',
                     loading: false,
@@ -42,8 +43,13 @@
                     search() {
                         this.errorMessage = '';
                         
-                        if (!this.artist.trim() || !this.song.trim()) {
+                        if (this.type === 'song' && (!this.artist.trim() || !this.song.trim())) {
                             this.errorMessage = 'Veuillez remplir à la fois l\'artiste et le morceau.';
+                            return;
+                        }
+
+                        if (this.type === 'artist' && !this.artist.trim()) {
+                            this.errorMessage = 'Veuillez remplir le nom de l\'artiste.';
                             return;
                         }
 
@@ -52,8 +58,9 @@
                         this.proposals = [];
 
                         const params = new URLSearchParams({
+                            type: this.type,
                             artist: this.artist.trim(),
-                            song: this.song.trim()
+                            song: this.type === 'song' ? this.song.trim() : ''
                         });
 
                         fetch('{{ route('search.songfacts') }}?' + params.toString())
@@ -79,16 +86,29 @@
                 }">
                 
                 <h3 class="text-lg font-bold text-gray-800 mb-1">🔍 Recherche & Extraction Songfacts</h3>
-                <p class="text-sm text-gray-500 mb-4">Renseignez l'artiste et le morceau puis cliquez sur <b>Rechercher</b> (ou appuyez sur Entrée).</p>
+                <p class="text-sm text-gray-500 mb-4">Choisissez ce que vous souhaitez rechercher puis remplissez les informations correspondantes.</p>
 
-                {{-- Formulaire d'envoi synchrone des deux champs --}}
+                {{-- Radio Buttons pour le choix du type de recherche --}}
+                <div class="flex items-center space-x-6 mb-4">
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="radio" x-model="type" value="song" class="text-indigo-600 focus:ring-indigo-500">
+                        <span class="ml-2 text-sm font-semibold text-gray-700">Chanson</span>
+                    </label>
+
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="radio" x-model="type" value="artist" @change="song = ''" class="text-indigo-600 focus:ring-indigo-500">
+                        <span class="ml-2 text-sm font-semibold text-gray-700">Artiste</span>
+                    </label>
+                </div>
+
+                {{-- Formulaire d'envoi synchrone --}}
                 <form @submit.prevent="search()" class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Artiste / Groupe</label>
                             <input type="text" 
                                 x-model="artist" 
-                                placeholder="Ex: Imagine Dragons / Coldplay" 
+                                placeholder="Ex: Coldplay, Imagine Dragons..." 
                                 class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
 
@@ -96,8 +116,10 @@
                             <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Morceau</label>
                             <input type="text" 
                                 x-model="song" 
-                                placeholder="Ex: Sharks / Yellow" 
-                                class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                :disabled="type === 'artist'"
+                                :placeholder="type === 'artist' ? 'Désactivé pour la recherche Artiste' : 'Ex: Yellow, Sharks...'" 
+                                class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                :class="type === 'artist' ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'bg-white'">
                         </div>
                     </div>
 
@@ -119,13 +141,17 @@
                 {{-- Résultat Direct Trouvé --}}
                 <template x-if="directData">
                     <div class="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
-                        <div class="font-bold text-green-900 text-base" x-text="directData.artist_name + ' — ' + directData.song_name"></div>
-                        <p class="text-xs text-gray-600 mt-1 line-clamp-3" x-text="directData.song_infos"></p>
+                        <div class="font-bold text-green-900 text-base" 
+                            x-text="directData.type === 'artist' ? 'Artiste : ' + directData.singer_name : directData.artist_name + ' — ' + directData.song_name">
+                        </div>
+                        <p class="text-xs text-gray-600 mt-1 line-clamp-3" 
+                        x-text="directData.bio_summary || directData.song_infos">
+                        </p>
                         <form action="{{ route('playlists.songs.add-scraped', $playlist) }}" method="POST" class="mt-3">
                             @csrf
                             <input type="hidden" name="source_url" :value="directData.source_url">
                             <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1.5 px-4 rounded text-xs shadow-sm">
-                                + Ajouter cette chanson à la playlist
+                                + Ajouter à la playlist
                             </button>
                         </form>
                     </div>
@@ -224,6 +250,76 @@
                         </div>
                     @empty
                         <p class="text-sm text-gray-400 italic">Aucune chanson dans cette playlist pour le moment.</p>
+                    @endforelse
+                </div>
+            </div>
+            {{-- Liste des Artistes dans la Playlist --}}
+            <div class="bg-white p-6 shadow-sm sm:rounded-lg mt-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Artistes dans la Playlist ({{ $playlist->singers->count() }})</h3>
+                
+                <div class="space-y-6">
+                    @forelse ($playlist->singers as $singer)
+                        @php
+                            $facts = array_filter(array_map('trim', explode("\n\n", (string) $singer->bio_summary)));
+                        @endphp
+
+                        <div x-data="{ open: true }" class="bg-indigo-50/40 border border-indigo-200 rounded-lg p-5 shadow-sm">
+                            
+                            {{-- Ligne du haut --}}
+                            <div class="flex flex-row items-center justify-between w-full transition-all duration-150 gap-4"
+                                :class="open ? 'pb-3 mb-4 border-b border-indigo-200' : 'pb-0 mb-0 border-b-0'">
+                                
+                                <div class="flex items-center gap-3 text-base text-gray-800 truncate pl-3">
+                                    @if($singer->picture_url)
+                                        <img src="{{ $singer->picture_url }}" alt="{{ $singer->singer_name }}" class="w-8 h-8 rounded-full object-cover shrink-0 border border-indigo-200">
+                                    @endif
+                                    <div>
+                                        <span class="font-bold text-gray-900">Artist:</span> {{ $singer->singer_name }}
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center space-x-3 shrink-0">
+                                    @if($singer->source_url)
+                                        <a href="{{ $singer->source_url }}" target="_blank" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline flex items-center gap-1">
+                                            URL
+                                        </a>
+                                    @endif
+
+                                    <form action="{{ route('singers.destroy', $singer) }}" method="POST" onsubmit="return confirm('Voulez-vous vraiment supprimer cet artiste de la playlist ?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="bg-red-500 hover:bg-red-600 text-white text-xs font-semibold py-1.5 px-3 rounded shadow-sm transition">
+                                            Delete
+                                        </button>
+                                    </form>
+
+                                    <button type="button" 
+                                            @click="open = !open" 
+                                            class="bg-gray-200 hover:bg-gray-300 text-gray-700 p-1.5 rounded transition flex items-center justify-center"
+                                            title="Agrandir / Réduire">
+                                        <svg class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': !open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+
+                            </div>
+
+                            {{-- Bloc des Facts Artiste --}}
+                            <div x-show="open" class="space-y-4 pl-3">
+                                @forelse($facts as $fact)
+                                    <div class="flex items-start gap-2.5">
+                                        <span class="text-indigo-500 font-bold text-base leading-none select-none">•</span>
+                                        <p class="text-sm text-gray-700 leading-relaxed">{{ preg_replace('/^[\s•\-\*]+/u', '', $fact) }}</p>
+                                    </div>
+                                @empty
+                                    <p class="text-sm text-gray-400 italic">Aucune anecdote disponible pour cet artiste.</p>
+                                @endforelse
+                            </div>
+
+                        </div>
+                    @empty
+                        <p class="text-sm text-gray-400 italic">Aucun artiste dans cette playlist pour le moment.</p>
                     @endforelse
                 </div>
             </div>

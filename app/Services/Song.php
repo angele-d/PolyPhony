@@ -16,6 +16,12 @@ class Song implements iSongRepository{
         $this->scraper = $scraper ?? new SongfactsScraper();
     }
 
+    /**
+     * Add a new entry to the database by scraping the song facts from the provided URL.
+     *
+     * @param string $url
+     * @return self
+     */
     public function create(string $url): self{
         $this->source_url = $url;
 

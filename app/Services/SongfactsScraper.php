@@ -104,49 +104,136 @@ class SongfactsScraper{
     }
 
     /**
-     * Search engine and Songfacts suggestions (fallback if correspondance)
-     * @param string $query
-     * @return array
+     * Scrape les données Songfacts pour une fiche Artiste.
      */
-    public function searchProposals(?string $artist = null, ?string $song = null, ?string $query = null): array{
+    public function scrapeArtistFacts(string $artistSlug): ?array
+    {
+        $url = "{$this->baseURL}/facts/{$artistSlug}";
+        $htmlContent = $this->fetchURLContent($url);
 
-        if(!empty(trim($artist ?? '')) && !empty(trim($song ?? ''))){
-            $artistSlug = Str::slug($artist);
-            $songSlug = Str::slug($song);
-
-            $directData = $this->scrapeSongFacts($artistSlug,$songSlug);
-            if($directData)
-                return[
-                'direct' => true,
-                'data' => $directData,
-                ];
+        if (!$htmlContent) {
+            return null;
         }
 
-        $searchQuery = $query ?: trim("{$artist} {$song}");
-        if(empty($searchQuery))
-            return ['direct' => false, 'proposals' => []];
+        $dom = new HtmlDocument();
+        $dom->load($htmlContent);
 
-        // Fallback: research results scraping
-        $searchUrl = "{$this->baseURL}/search/songs/" . urlencode($query);
+        // Artist name
+        $titleNode = $dom->find('h1', 0);
+        $artistTitle = $titleNode ? trim(strip_tags($titleNode->plaintext)) : Str::title(str_replace('-', ' ', $artistSlug));
+
+        // Possible artist picture
+        $pictureUrl = null;
+        $ogImage = $dom->find('meta[property="og:image"]', 0);
+        if ($ogImage && !empty($ogImage->content)) {
+            $pictureUrl = $ogImage->content;
+        }
+
+        // facts extraction
+        $facts = [];
+        $factNodes = $dom->find('ul.songfacts-results li, .artistfacts-results li');
+
+        if (!empty($factNodes)) {
+            foreach ($factNodes as $li) {
+                $inner = $li->find('.inner', 0) ?: $li;
+                if ($inner) {
+                    foreach ($inner->find('div') as $div) {
+                        $div->outertext = '';
+                    }
+                    foreach ($inner->find('span') as $span) {
+                        $span->outertext = '';
+                    }
+                    foreach ($inner->find('a') as $a) {
+                        $a->outertext = '';
+                    }
+
+                    $rawHTML = $inner->outertext;
+                    $text = trim(strip_tags($rawHTML));
+                    $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                    $text = preg_replace('/\s+/', ' ', $text);
+
+                    if (strlen($text) > 20) {
+                        $facts[] = $text;
+                    }
+                }
+            }
+        }
+
+        $formattedInfos = implode("\n\n", array_map(function ($fact) {
+            return "• " . trim($fact);
+        }, $facts));
+
+        $data = [
+            'type'        => 'artist',
+            'singer_name' => $artistTitle,
+            'artist_name' => $artistTitle, // Utile pour l'aperçu Alpine.js
+            'bio_summary' => $formattedInfos ?: 'Aucune anecdote disponible pour cet artiste.',
+            'picture_url' => $pictureUrl,
+            'source_url'  => $url,
+        ];
+
+        Log::info("Scrape Artist Facts Data", $data);
+
+        return $data;
+    }
+
+    /**
+     * Moteur de recherche et suggestions Songfacts
+     */
+    public function searchProposals(?string $artist = null, ?string $song = null, ?string $query = null, string $type = 'song'): array
+    {
+        // 1. Recherche directe par Artiste
+        if ($type === 'artist' && !empty(trim($artist ?? ''))) {
+            $artistSlug = Str::slug($artist);
+            $directData = $this->scrapeArtistFacts($artistSlug);
+            if ($directData) {
+                return [
+                    'direct' => true,
+                    'data'   => $directData,
+                ];
+            }
+        }
+
+        // 2. Recherche directe par Chanson (Artiste + Morceau)
+        if ($type === 'song' && !empty(trim($artist ?? '')) && !empty(trim($song ?? ''))) {
+            $artistSlug = Str::slug($artist);
+            $songSlug   = Str::slug($song);
+
+            $directData = $this->scrapeSongFacts($artistSlug, $songSlug);
+            if ($directData) {
+                return [
+                    'direct' => true,
+                    'data'   => $directData,
+                ];
+            }
+        }
+
+        // 3. Fallback de recherche par mots-clés
+        $searchQuery = !empty(trim($query ?? '')) ? $query : trim("{$artist} {$song}");
+        if (empty(trim($searchQuery))) {
+            return ['direct' => false, 'proposals' => []];
+        }
+
+        $searchUrl = "{$this->baseURL}/search/songs/" . urlencode($searchQuery);
         $htmlContent = $this->fetchURLContent($searchUrl);
         $proposals = [];
 
-        if($htmlContent){
+        if ($htmlContent) {
             $dom = new HtmlDocument();
             $dom->load($htmlContent);
-            foreach($dom->find('ul.browse-list-music li a, .search-results a') as $link){
+            foreach ($dom->find('ul.browse-list-music li a, .search-results a') as $link) {
                 $href = $link->href;
-                if(str_contains($href, '/facts/')){
+                if (str_contains($href, '/facts/')) {
                     $proposals[] = [
                         'title' => trim(strip_tags($link->plaintext)),
-                        'url' => str_starts_with($href,'http') ? $href : $this->baseURL . $href,
+                        'url'   => str_starts_with($href, 'http') ? $href : $this->baseURL . $href,
                     ];
                 }
             }
         }
 
         return [
-            'direct' => false,
+            'direct'    => false,
             'proposals' => array_values(array_unique($proposals, SORT_REGULAR)),
         ];
     }

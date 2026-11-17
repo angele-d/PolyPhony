@@ -4,6 +4,7 @@ use App\Http\Controllers\PlaylistController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SongController;
+use App\Http\Controllers\SingerController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -30,11 +31,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Dynamic autocompletion for Songfacts
     Route::get('/search/songfacts', [SearchController::class, 'autocomplete'])->name('search.songfacts');
-    // Add a scraped song in the playlist
-    Route::post('/playlists/{playlist}/songs/scraped', [SearchController::class, 'addScrapedSong'])->name('playlists.songs.add-scraped');
-
+    // Adding scraped infos in the playlist
+    Route::post('/playlists/{playlist}/songs/scraped', [SearchController::class, 'addScrapedInfos'])->name('playlists.songs.add-scraped');
     // Deleting elements from the playlist
     Route::delete('/songs/{song}', [SongController::class, 'destroy'])->name('songs.destroy');
+    Route::delete('/singers/{singer}', [SingerController::class, 'destroy'])->name('singers.destroy');
 
     // Other CRUD routes
     Route::resource('playlists',PlaylistController::class)->except(['index']);

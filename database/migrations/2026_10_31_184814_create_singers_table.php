@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('playlist_id')->constrained()->onDelete('cascade');
             $table->string('singer_name');
-            $table->string('bio_summary')->nullable();
+            $table->text('bio_summary')->nullable();
             $table->string('picture_url', 500)->nullable();
             $table->string('source_url', 500);
             $table->timestamp('added_at')->useCurrent();
