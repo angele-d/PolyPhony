@@ -1,17 +1,227 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center">
+        <div x-data="{ openTeamModal: {{ $errors->has('email') ? 'true' : 'false' }}, openSettingsModal: {{ $errors->has('playlist_name') ? 'true' : 'false' }} }"
+             class="flex flex-wrap justify-between items-center gap-4">
             <div>
-                <h2 class="font-semibold text-2xl text-gray-800 leading-tight">
-                    {{ $playlist->playlist_name }}
-                </h2>
-                <p class="text-sm text-gray-500">
+                <div class="flex items-center gap-3">
+                    <h2 class="font-semibold text-2xl text-gray-800 leading-tight">
+                        {{ $playlist->playlist_name }}
+                    </h2>
+
+                    @can('manageMembers', $playlist)
+                        <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+                            Administrateur
+                        </span>
+                    @else
+                        <span class="bg-emerald-100 text-emerald-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+                            Contributeur
+                        </span>
+                    @endcan
+                </div>
+                <p class="text-sm text-gray-500 mt-0.5">
                     Administrateur : <span class="font-medium text-gray-700">{{ $playlist->administrator->name }}</span>
                 </p>
+                @if($playlist->description)
+                    <p class="text-xs text-gray-500 mt-1">{{ $playlist->description }}</p>
+                @endif
             </div>
-            <a href="{{ route('dashboard') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md text-sm font-semibold">
-                &larr; Retour au tableau de bord
-            </a>
+
+            <div class="flex items-center gap-3">
+                {{-- Bouton Modale Équipe --}}
+                <button type="button"
+                        @click="openTeamModal = true"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-semibold shadow-sm transition flex items-center gap-2">
+                    <span>👥 Équipe ({{ $playlist->contributors->count() + 1 }})</span>
+                </button>
+
+                {{-- Bouton Paramètres (Administrateur uniquement, si routes update/destroy déclarées) --}}
+                @can('update', $playlist)
+                    @if(Route::has('playlists.update') || Route::has('playlists.destroy'))
+                        <button type="button"
+                                @click="openSettingsModal = true"
+                                class="bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 px-3 py-2 rounded-md text-sm font-semibold transition">
+                            ⚙️ Paramètres
+                        </button>
+                    @endif
+                @endcan
+
+                <a href="{{ route('dashboard') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md text-sm font-semibold">
+                    &larr; Retour au tableau de bord
+                </a>
+            </div>
+
+            {{-- Modale de Gestion des Contributeurs --}}
+            <div x-show="openTeamModal"
+                 style="display: none;"
+                 class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center bg-gray-900/50 p-4"
+                 @keydown.escape.window="openTeamModal = false">
+
+                <div @click.away="openTeamModal = false"
+                     class="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 space-y-5">
+
+                    <div class="flex justify-between items-center border-b pb-3">
+                        <h3 class="text-lg font-bold text-gray-900">👥 Équipe de la Playlist</h3>
+                        <button type="button" @click="openTeamModal = false" class="text-gray-400 hover:text-gray-600 text-xl font-bold">
+                            &times;
+                        </button>
+                    </div>
+
+                    {{-- Formulaire d'invitation (Administrateur uniquement) --}}
+                    @can('manageMembers', $playlist)
+                        <form action="{{ route('playlists.members.store', $playlist) }}" method="POST" class="space-y-2">
+                            @csrf
+                            <label class="block text-xs font-bold text-gray-700 uppercase">Inviter un contributeur (e-mail)</label>
+                            <div class="flex gap-2">
+                                <input type="email"
+                                       name="email"
+                                       value="{{ old('email') }}"
+                                       required
+                                       placeholder="exemple@domaine.com"
+                                       class="flex-1 border-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-md shadow-sm">
+                                    Inviter
+                                </button>
+                            </div>
+                            @error('email')
+                                <p class="text-xs text-red-600 font-semibold">{{ $message }}</p>
+                            @enderror
+                        </form>
+                    @endcan
+
+                    {{-- Liste des membres actuels --}}
+                    <div class="space-y-3 pt-2">
+                        <h4 class="text-xs font-bold text-gray-500 uppercase">Membres ayant accès</h4>
+
+                        {{-- Ligne Administrateur --}}
+                        <div class="flex items-center justify-between p-3 bg-indigo-50/60 border border-indigo-100 rounded-md">
+                            <div>
+                                <div class="text-sm font-bold text-gray-900">{{ $playlist->administrator->name }}</div>
+                                <div class="text-xs text-gray-500">{{ $playlist->administrator->email }}</div>
+                            </div>
+                            <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+                                Administrateur
+                            </span>
+                        </div>
+
+                        {{-- Liste des Contributeurs --}}
+                        @forelse($playlist->contributors as $contributor)
+                            <div class="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-md">
+                                <div>
+                                    <div class="text-sm font-semibold text-gray-800">{{ $contributor->name }}</div>
+                                    <div class="text-xs text-gray-500">
+                                        {{ $contributor->email }}
+                                        @if($contributor->pivot && $contributor->pivot->added_at)
+                                            • Ajouté le {{ \Carbon\Carbon::parse($contributor->pivot->added_at)->format('d/m/Y') }}
+                                        @endif
+                                    </div>
+                                </div>
+
+                                @can('manageMembers', $playlist)
+                                    <form action="{{ route('playlists.members.destroy', [$playlist, $contributor]) }}"
+                                          method="POST"
+                                          onsubmit="return confirm('Retirer {{ $contributor->name }} de cette playlist ?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="bg-red-500 hover:bg-red-600 text-white text-xs font-semibold px-2.5 py-1 rounded shadow-sm">
+                                            Retirer
+                                        </button>
+                                    </form>
+                                @else
+                                    <span class="text-xs text-gray-500 font-medium">Contributeur</span>
+                                @endcan
+                            </div>
+                        @empty
+                            <p class="text-xs text-gray-400 italic">Aucun contributeur invité pour le moment.</p>
+                        @endforelse
+                    </div>
+
+                    <div class="flex justify-end border-t pt-3">
+                        <button type="button" @click="openTeamModal = false" class="bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-semibold px-4 py-2 rounded">
+                            Fermer
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Modale Paramètres & Suppression (Administrateur uniquement) --}}
+            @can('update', $playlist)
+                @if(Route::has('playlists.update') || Route::has('playlists.destroy'))
+                    <div x-show="openSettingsModal"
+                         style="display: none;"
+                         class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center bg-gray-900/50 p-4"
+                         @keydown.escape.window="openSettingsModal = false">
+
+                        <div @click.away="openSettingsModal = false"
+                             class="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 space-y-5">
+
+                            <div class="flex justify-between items-center border-b pb-3">
+                                <h3 class="text-lg font-bold text-gray-900">⚙️ Paramètres de la Playlist</h3>
+                                <button type="button" @click="openSettingsModal = false" class="text-gray-400 hover:text-gray-600 text-xl font-bold">
+                                    &times;
+                                </button>
+                            </div>
+
+                            @if(Route::has('playlists.update'))
+                                <form action="{{ route('playlists.update', $playlist) }}" method="POST" class="space-y-4">
+                                    @csrf
+                                    @method('PUT')
+
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Nom de la playlist</label>
+                                        <input type="text"
+                                               name="playlist_name"
+                                               value="{{ old('playlist_name', $playlist->playlist_name) }}"
+                                               required
+                                               class="w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                        @error('playlist_name')
+                                            <p class="text-xs text-red-600 font-semibold mt-1">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Description</label>
+                                        <textarea name="description"
+                                                  rows="3"
+                                                  class="w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">{{ old('description', $playlist->description) }}</textarea>
+                                    </div>
+
+                                    <div class="flex justify-end">
+                                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-md shadow-sm">
+                                            Enregistrer les modifications
+                                        </button>
+                                    </div>
+                                </form>
+                            @endif
+
+                            @can('delete', $playlist)
+                                @if(Route::has('playlists.destroy'))
+                                    <div class="border-t pt-4 flex items-center justify-between">
+                                        <div>
+                                            <p class="text-sm font-bold text-red-700">Supprimer la playlist</p>
+                                            <p class="text-xs text-gray-500">Cette action est irréversible et supprimera tout son contenu.</p>
+                                        </div>
+                                        <form action="{{ route('playlists.destroy', $playlist) }}"
+                                              method="POST"
+                                              onsubmit="return confirm('Voulez-vous vraiment supprimer définitivement cette playlist ?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-2 rounded shadow-sm">
+                                                Supprimer
+                                            </button>
+                                        </form>
+                                    </div>
+                                @endif
+                            @endcan
+
+                            <div class="flex justify-end border-t pt-3">
+                                <button type="button" @click="openSettingsModal = false" class="bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-semibold px-4 py-2 rounded">
+                                    Fermer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            @endcan
         </div>
     </x-slot>
 
@@ -30,152 +240,154 @@
                 </div>
             @endif
 
-            {{-- Moteur de Recherche Intelligente Songfacts (Chanson / Artiste) --}}
-            <div class="bg-white p-6 shadow-sm sm:rounded-lg border-2 border-indigo-100" 
-                x-data="{
-                    type: 'song',
-                    artist: '',
-                    song: '',
-                    loading: false,
-                    directData: null,
-                    proposals: [],
-                    errorMessage: '',
-                    search() {
-                        this.errorMessage = '';
-                        
-                        if (this.type === 'song' && (!this.artist.trim() || !this.song.trim())) {
-                            this.errorMessage = 'Veuillez remplir à la fois l\'artiste et le morceau.';
-                            return;
-                        }
+            {{-- Moteur de Recherche Intelligente Songfacts (Chanson / Artiste) : Administrateur et Contributeurs --}}
+            @can('contribute', $playlist)
+                <div class="bg-white p-6 shadow-sm sm:rounded-lg border-2 border-indigo-100" 
+                    x-data="{
+                        type: 'song',
+                        artist: '',
+                        song: '',
+                        loading: false,
+                        directData: null,
+                        proposals: [],
+                        errorMessage: '',
+                        search() {
+                            this.errorMessage = '';
+                            
+                            if (this.type === 'song' && (!this.artist.trim() || !this.song.trim())) {
+                                this.errorMessage = 'Veuillez remplir à la fois l\'artiste et le morceau.';
+                                return;
+                            }
 
-                        if (this.type === 'artist' && !this.artist.trim()) {
-                            this.errorMessage = 'Veuillez remplir le nom de l\'artiste.';
-                            return;
-                        }
+                            if (this.type === 'artist' && !this.artist.trim()) {
+                                this.errorMessage = 'Veuillez remplir le nom de l\'artiste.';
+                                return;
+                            }
 
-                        this.loading = true;
-                        this.directData = null;
-                        this.proposals = [];
+                            this.loading = true;
+                            this.directData = null;
+                            this.proposals = [];
 
-                        const params = new URLSearchParams({
-                            type: this.type,
-                            artist: this.artist.trim(),
-                            song: this.type === 'song' ? this.song.trim() : ''
-                        });
-
-                        fetch('{{ route('search.songfacts') }}?' + params.toString())
-                            .then(res => res.json())
-                            .then(data => {
-                                this.loading = false;
-                                if (data.direct) {
-                                    this.directData = data.data;
-                                    this.proposals = [];
-                                } else {
-                                    this.directData = null;
-                                    this.proposals = data.proposals || [];
-                                    if (this.proposals.length === 0) {
-                                        this.errorMessage = 'Aucun résultat direct ni suggestion trouvée sur Songfacts.';
-                                    }
-                                }
-                            })
-                            .catch(() => { 
-                                this.loading = false; 
-                                this.errorMessage = 'Une erreur s\'est produite lors de la recherche.';
+                            const params = new URLSearchParams({
+                                type: this.type,
+                                artist: this.artist.trim(),
+                                song: this.type === 'song' ? this.song.trim() : ''
                             });
-                    }
-                }">
-                
-                <h3 class="text-lg font-bold text-gray-800 mb-1">🔍 Recherche & Extraction Songfacts</h3>
-                <p class="text-sm text-gray-500 mb-4">Choisissez ce que vous souhaitez rechercher puis remplissez les informations correspondantes.</p>
 
-                {{-- Radio Buttons pour le choix du type de recherche --}}
-                <div class="flex items-center space-x-6 mb-4">
-                    <label class="inline-flex items-center cursor-pointer">
-                        <input type="radio" x-model="type" value="song" class="text-indigo-600 focus:ring-indigo-500">
-                        <span class="ml-2 text-sm font-semibold text-gray-700">Chanson</span>
-                    </label>
+                            fetch('{{ route('search.songfacts') }}?' + params.toString())
+                                .then(res => res.json())
+                                .then(data => {
+                                    this.loading = false;
+                                    if (data.direct) {
+                                        this.directData = data.data;
+                                        this.proposals = [];
+                                    } else {
+                                        this.directData = null;
+                                        this.proposals = data.proposals || [];
+                                        if (this.proposals.length === 0) {
+                                            this.errorMessage = 'Aucun résultat direct ni suggestion trouvée sur Songfacts.';
+                                        }
+                                    }
+                                })
+                                .catch(() => { 
+                                    this.loading = false; 
+                                    this.errorMessage = 'Une erreur s\'est produite lors de la recherche.';
+                                });
+                        }
+                    }">
+                    
+                    <h3 class="text-lg font-bold text-gray-800 mb-1">🔍 Recherche & Extraction Songfacts</h3>
+                    <p class="text-sm text-gray-500 mb-4">Choisissez ce que vous souhaitez rechercher puis remplissez les informations correspondantes.</p>
 
-                    <label class="inline-flex items-center cursor-pointer">
-                        <input type="radio" x-model="type" value="artist" @change="song = ''" class="text-indigo-600 focus:ring-indigo-500">
-                        <span class="ml-2 text-sm font-semibold text-gray-700">Artiste</span>
-                    </label>
-                </div>
+                    {{-- Radio Buttons pour le choix du type de recherche --}}
+                    <div class="flex items-center space-x-6 mb-4">
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="radio" x-model="type" value="song" class="text-indigo-600 focus:ring-indigo-500">
+                            <span class="ml-2 text-sm font-semibold text-gray-700">Chanson</span>
+                        </label>
 
-                {{-- Formulaire d'envoi synchrone --}}
-                <form @submit.prevent="search()" class="space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Artiste / Groupe</label>
-                            <input type="text" 
-                                x-model="artist" 
-                                placeholder="Ex: Coldplay, Imagine Dragons..." 
-                                class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Morceau</label>
-                            <input type="text" 
-                                x-model="song" 
-                                :disabled="type === 'artist'"
-                                :placeholder="type === 'artist' ? 'Désactivé pour la recherche Artiste' : 'Ex: Yellow, Sharks...'" 
-                                class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                                :class="type === 'artist' ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'bg-white'">
-                        </div>
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="radio" x-model="type" value="artist" @change="song = ''" class="text-indigo-600 focus:ring-indigo-500">
+                            <span class="ml-2 text-sm font-semibold text-gray-700">Artiste</span>
+                        </label>
                     </div>
 
-                    {{-- Message d'erreur local --}}
-                    <template x-if="errorMessage">
-                        <p class="text-xs text-red-600 font-semibold" x-text="errorMessage"></p>
+                    {{-- Formulaire d'envoi synchrone --}}
+                    <form @submit.prevent="search()" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Artiste / Groupe</label>
+                                <input type="text" 
+                                    x-model="artist" 
+                                    placeholder="Ex: Coldplay, Imagine Dragons..." 
+                                    class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Morceau</label>
+                                <input type="text" 
+                                    x-model="song" 
+                                    :disabled="type === 'artist'"
+                                    :placeholder="type === 'artist' ? 'Désactivé pour la recherche Artiste' : 'Ex: Yellow, Sharks...'" 
+                                    class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                    :class="type === 'artist' ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'bg-white'">
+                            </div>
+                        </div>
+
+                        {{-- Message d'erreur local --}}
+                        <template x-if="errorMessage">
+                            <p class="text-xs text-red-600 font-semibold" x-text="errorMessage"></p>
+                        </template>
+
+                        <div class="flex justify-end">
+                            <button type="submit" 
+                                    :disabled="loading" 
+                                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-5 rounded-md text-sm shadow-sm transition flex items-center gap-2">
+                                <span x-show="!loading">🔍 Rechercher sur Songfacts</span>
+                                <span x-show="loading">Recherche en cours...</span>
+                            </button>
+                        </div>
+                    </form>
+
+                    {{-- Résultat Direct Trouvé --}}
+                    <template x-if="directData">
+                        <div class="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
+                            <div class="font-bold text-green-900 text-base" 
+                                x-text="directData.type === 'artist' ? 'Artiste : ' + directData.singer_name : directData.artist_name + ' — ' + directData.song_name">
+                            </div>
+                            <p class="text-xs text-gray-600 mt-1 line-clamp-3" 
+                            x-text="directData.bio_summary || directData.song_infos">
+                            </p>
+                            <form action="{{ route('playlists.songs.add-scraped', $playlist) }}" method="POST" class="mt-3">
+                                @csrf
+                                <input type="hidden" name="source_url" :value="directData.source_url">
+                                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1.5 px-4 rounded text-xs shadow-sm">
+                                    + Ajouter à la playlist
+                                </button>
+                            </form>
+                        </div>
                     </template>
 
-                    <div class="flex justify-end">
-                        <button type="submit" 
-                                :disabled="loading" 
-                                class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-5 rounded-md text-sm shadow-sm transition flex items-center gap-2">
-                            <span x-show="!loading">🔍 Rechercher sur Songfacts</span>
-                            <span x-show="loading">Recherche en cours...</span>
-                        </button>
-                    </div>
-                </form>
-
-                {{-- Résultat Direct Trouvé --}}
-                <template x-if="directData">
-                    <div class="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
-                        <div class="font-bold text-green-900 text-base" 
-                            x-text="directData.type === 'artist' ? 'Artiste : ' + directData.singer_name : directData.artist_name + ' — ' + directData.song_name">
+                    {{-- Propositions d'autocomplétion si non direct --}}
+                    <template x-if="!directData && proposals.length > 0">
+                        <div class="mt-4 bg-white border rounded-md shadow-lg divide-y">
+                            <div class="p-2 bg-gray-50 text-xs font-semibold text-gray-500">Suggestions associées :</div>
+                            <template x-for="item in proposals" :key="item.url">
+                                <div class="p-3 hover:bg-indigo-50 flex justify-between items-center">
+                                    <span class="text-sm font-medium text-gray-800" x-text="item.title"></span>
+                                    <form action="{{ route('playlists.songs.add-scraped', $playlist) }}" method="POST">
+                                        @csrf
+                                        <input type="hidden" name="source_url" :value="item.url">
+                                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-1 px-3 rounded">
+                                            Extraire & Importer
+                                        </button>
+                                    </form>
+                                </div>
+                            </template>
                         </div>
-                        <p class="text-xs text-gray-600 mt-1 line-clamp-3" 
-                        x-text="directData.bio_summary || directData.song_infos">
-                        </p>
-                        <form action="{{ route('playlists.songs.add-scraped', $playlist) }}" method="POST" class="mt-3">
-                            @csrf
-                            <input type="hidden" name="source_url" :value="directData.source_url">
-                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1.5 px-4 rounded text-xs shadow-sm">
-                                + Ajouter à la playlist
-                            </button>
-                        </form>
-                    </div>
-                </template>
-
-                {{-- Propositions d'autocomplétion si non direct --}}
-                <template x-if="!directData && proposals.length > 0">
-                    <div class="mt-4 bg-white border rounded-md shadow-lg divide-y">
-                        <div class="p-2 bg-gray-50 text-xs font-semibold text-gray-500">Suggestions associées :</div>
-                        <template x-for="item in proposals" :key="item.url">
-                            <div class="p-3 hover:bg-indigo-50 flex justify-between items-center">
-                                <span class="text-sm font-medium text-gray-800" x-text="item.title"></span>
-                                <form action="{{ route('playlists.songs.add-scraped', $playlist) }}" method="POST">
-                                    @csrf
-                                    <input type="hidden" name="source_url" :value="item.url">
-                                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-1 px-3 rounded">
-                                        Extraire & Importer
-                                    </button>
-                                </form>
-                            </div>
-                        </template>
-                    </div>
-                </template>
-            </div>
+                    </template>
+                </div>
+            @endcan
 
             {{-- Liste des chansons déjà importées --}}
             <div class="bg-white p-6 shadow-sm sm:rounded-lg mt-6">
@@ -214,13 +426,15 @@
                                         </a>
                                     @endif
 
-                                    <form action="{{ route('songs.destroy', $song) }}" method="POST" onsubmit="return confirm('Voulez-vous vraiment supprimer cette chanson de la playlist ?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="bg-red-500 hover:bg-red-600 text-white text-xs font-semibold py-1.5 px-3 rounded shadow-sm transition">
-                                            Delete
-                                        </button>
-                                    </form>
+                                    @can('contribute', $playlist)
+                                        <form action="{{ route('songs.destroy', $song) }}" method="POST" onsubmit="return confirm('Voulez-vous vraiment supprimer cette chanson de la playlist ?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white text-xs font-semibold py-1.5 px-3 rounded shadow-sm transition">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    @endcan
 
                                     {{-- Bouton Flèche Agrandir / Réduire --}}
                                     <button type="button" 
@@ -253,6 +467,7 @@
                     @endforelse
                 </div>
             </div>
+
             {{-- Liste des Artistes dans la Playlist --}}
             <div class="bg-white p-6 shadow-sm sm:rounded-lg mt-6">
                 <h3 class="text-lg font-bold text-gray-800 mb-4">Artistes dans la Playlist ({{ $playlist->singers->count() }})</h3>
@@ -285,13 +500,15 @@
                                         </a>
                                     @endif
 
-                                    <form action="{{ route('singers.destroy', $singer) }}" method="POST" onsubmit="return confirm('Voulez-vous vraiment supprimer cet artiste de la playlist ?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="bg-red-500 hover:bg-red-600 text-white text-xs font-semibold py-1.5 px-3 rounded shadow-sm transition">
-                                            Delete
-                                        </button>
-                                    </form>
+                                    @can('contribute', $playlist)
+                                        <form action="{{ route('singers.destroy', $singer) }}" method="POST" onsubmit="return confirm('Voulez-vous vraiment supprimer cet artiste de la playlist ?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white text-xs font-semibold py-1.5 px-3 rounded shadow-sm transition">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    @endcan
 
                                     <button type="button" 
                                             @click="open = !open" 

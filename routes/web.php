@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\PlaylistController;
+use App\Http\Controllers\PlaylistMemberController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SongController;
@@ -39,5 +40,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Other CRUD routes
     Route::resource('playlists',PlaylistController::class)->except(['index']);
+    
+    // Playlist member management
+    Route::post('/playlists/{playlist}/members', [PlaylistMemberController::class, 'store'])->name('playlists.members.store');
+    Route::delete('/playlists/{playlist}/members/{user}', [PlaylistMemberController::class, 'destroy'])->name('playlists.members.destroy');
 });
 require __DIR__.'/auth.php';

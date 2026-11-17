@@ -8,6 +8,7 @@ use App\Services\Song as SongService;
 use App\Services\Singer as SingerService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Gate;
 
 class SearchController extends Controller
 {
@@ -36,6 +37,8 @@ class SearchController extends Controller
      */
     public function addScrapedInfos(Request $request, Playlist $playlist)
     {
+        Gate::authorize('contribute', $playlist);
+
         $request->validate([
             'source_url' => 'required|url',
         ]);
