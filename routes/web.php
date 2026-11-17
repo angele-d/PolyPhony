@@ -2,9 +2,17 @@
 
 use App\Http\Controllers\PlaylistController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SongController;
+use App\Http\Controllers\SingerController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
+    // If the user is authenticated, redirect to dashboard, else show welcome page
+    if (Auth::check()) {
+        return redirect()->route('dashboard');
+    }
     return view('welcome');
 });
 
@@ -20,6 +28,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Dynamic autocompletion for Songfacts
+    Route::get('/search/songfacts', [SearchController::class, 'autocomplete'])->name('search.songfacts');
+    // Adding scraped infos in the playlist
+    Route::post('/playlists/{playlist}/songs/scraped', [SearchController::class, 'addScrapedInfos'])->name('playlists.songs.add-scraped');
+    // Deleting elements from the playlist
+    Route::delete('/songs/{song}', [SongController::class, 'destroy'])->name('songs.destroy');
+    Route::delete('/singers/{singer}', [SingerController::class, 'destroy'])->name('singers.destroy');
 
     // Other CRUD routes
     Route::resource('playlists',PlaylistController::class)->except(['index']);

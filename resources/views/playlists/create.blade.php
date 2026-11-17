@@ -20,7 +20,7 @@
 
                     <div class="flex justify-end gap-3">
                         <a href="{{ route('playlists.index') }}" class="px-4 py-2 border rounded-md text-gray-600">Annuler</a>
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">Créer</button>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-gray-800 font-bold py-2 px-4 rounded-md">Créer</button>
                     </div>
                 </form>
             </div>
