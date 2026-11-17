@@ -541,6 +541,120 @@
                 </div>
             </div>
 
+            {{-- Liste et Upload sécurisé des Documents (PDF, PNG, MP3) --}}
+            <div class="bg-white p-6 shadow-sm sm:rounded-lg mt-6">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800">
+                            🔒 Documents & Médias sécurisés ({{ $playlist->documents->count() }})
+                        </h3>
+                        <p class="text-xs text-gray-500">
+                            Fichiers chiffrés via OpenSSL (AES-256-CBC) avant stockage sur le serveur.
+                        </p>
+                    </div>
+                </div>
+
+                {{-- Formulaire d'upload réservé à l'Administrateur et aux Contributeurs --}}
+                @can('contribute', $playlist)
+                    <form action="{{ route('playlists.documents.store', $playlist) }}"
+                          method="POST"
+                          enctype="multipart/form-data"
+                          class="mb-6 p-4 bg-gray-50 border border-dashed border-gray-300 rounded-lg">
+                        @csrf
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div class="flex-1">
+                                <label for="document" class="block text-xs font-bold text-gray-700 uppercase mb-1">
+                                    Joindre un fichier (PDF, PNG, MP3 — max 20 Mo)
+                                </label>
+                                <input type="file"
+                                       id="document"
+                                       name="document"
+                                       accept=".pdf,.png,.mp3,application/pdf,image/png,audio/mpeg"
+                                       required
+                                       class="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                @error('document')
+                                    <p class="text-xs text-red-600 font-semibold mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <button type="submit"
+                                    class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-5 rounded-md shadow-sm transition shrink-0">
+                                🔐 Chiffrer & Importer
+                            </button>
+                        </div>
+                    </form>
+                @endcan
+
+                {{-- Liste des documents chiffrés --}}
+                <div class="space-y-3">
+                    @forelse ($playlist->documents as $document)
+                        @php
+                            $ext = strtoupper(pathinfo($document->original_name, PATHINFO_EXTENSION));
+                            $badgeColor = match ($ext) {
+                                'PDF' => 'bg-red-100 text-red-800',
+                                'PNG' => 'bg-sky-100 text-sky-800',
+                                'MP3' => 'bg-purple-100 text-purple-800',
+                                default => 'bg-gray-100 text-gray-800',
+                            };
+                        @endphp
+
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <span class="px-2.5 py-1 rounded text-xs font-bold shrink-0 {{ $badgeColor }}">
+                                    {{ $ext ?: 'FILE' }}
+                                </span>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-semibold text-gray-900 truncate">
+                                        {{ $document->original_name }}
+                                    </p>
+                                    <p class="text-xs text-gray-500">
+                                        Chiffré AES-256 • Ajouté le {{ \Carbon\Carbon::parse($document->added_at)->format('d/m/Y à H:i') }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-wrap items-center gap-3 shrink-0">
+                                {{-- Lecteur audio direct pour les MP3 déchiffrés à la volée --}}
+                                @if ($document->mime_type === 'audio/mpeg')
+                                    <audio controls preload="none" class="h-8 max-w-[220px]">
+                                        <source src="{{ route('documents.download', ['document' => $document, 'inline' => 1]) }}" type="audio/mpeg">
+                                    </audio>
+                                @else
+                                    {{-- Ouverture sécurisée dans un nouvel onglet (PDF / PNG) --}}
+                                    <a href="{{ route('documents.download', ['document' => $document, 'inline' => 1]) }}"
+                                       target="_blank"
+                                       class="text-xs font-semibold text-gray-700 hover:text-indigo-700 underline">
+                                        Aperçu
+                                    </a>
+                                @endif
+
+                                {{-- Lien de téléchargement sécurisé (déchiffrement serveur) --}}
+                                <a href="{{ route('documents.download', $document) }}"
+                                   class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-1.5 px-3 rounded shadow-sm transition">
+                                    ⬇ Télécharger
+                                </a>
+
+                                {{-- Suppression (Admin & Contributeurs) --}}
+                                @can('contribute', $playlist)
+                                    <form action="{{ route('documents.destroy', $document) }}"
+                                          method="POST"
+                                          onsubmit="return confirm('Voulez-vous vraiment supprimer ce document chiffré ?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                                class="bg-red-500 hover:bg-red-600 text-white text-xs font-semibold py-1.5 px-3 rounded shadow-sm transition">
+                                            Delete
+                                        </button>
+                                    </form>
+                                @endcan
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-sm text-gray-400 italic">Aucun document chiffré dans cette playlist pour le moment.</p>
+                    @endforelse
+                </div>
+            </div>
+
         </div>
     </div>
 </x-app-layout>

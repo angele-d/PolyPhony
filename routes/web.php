@@ -6,6 +6,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SongController;
 use App\Http\Controllers\SingerController;
+use App\Http\Controllers\DocumentController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -44,5 +45,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Playlist member management
     Route::post('/playlists/{playlist}/members', [PlaylistMemberController::class, 'store'])->name('playlists.members.store');
     Route::delete('/playlists/{playlist}/members/{user}', [PlaylistMemberController::class, 'destroy'])->name('playlists.members.destroy');
+
+    // Crypted document management
+    Route::post('/playlists/{playlist}/documents', [DocumentController::class, 'store'])
+    ->name('playlists.documents.store');
+    Route::get('/documents/{document}/download', [DocumentController::class, 'download'])
+        ->name('documents.download');
+    Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])
+        ->name('documents.destroy');
 });
 require __DIR__.'/auth.php';
