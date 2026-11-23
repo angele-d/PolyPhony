@@ -333,40 +333,28 @@ Le projet intègre un module d'importation de profils d'intervenants ou de music
 <?xml version="1.0" encoding="UTF-8"?>
 <songs>
     <song>
-        <id>1</id>
         <songname>So What</songname>
         <artistname>Miles Davis</artistname>
         <songinfos>Une composition emblématique du jazz modal, issue de l'album "Kind of Blue" (1959).</songinfos>
         <songurl>https://www.songfacts.com/facts/miles-davis/so-what</songurl>
-        <added_at>1959-08-17</added_at>
-        <updated_at>2024-01-15</updated_at>
     </song>
     <song>
-        <id>2</id>
         <songname>Feeling Good</songname>
         <artistname>Nina Simone</artistname>
         <songinfos>Une chanson emblématique de Nina Simone, interprétée dans plusieurs langues.</songinfos>
         <songurl>https://www.songfacts.com/facts/nina-simone/feeling-good</songurl>
-        <added_at>1959-08-17</added_at>
-        <updated_at>2024-01-15</updated_at>
     </song>
     <song>
-        <id>3</id>
         <songname>Strange Fruit</songname>
         <artistname>Bessie Smith</artistname>
         <songinfos>Une chanson puissante sur la lynchage en Amérique du Sud.</songinfos>
         <songurl>https://www.songfacts.com/facts/bessie-smith/strange-fruits</songurl>
-        <added_at>1939-08-17</added_at>
-        <updated_at>2024-01-15</updated_at>
     </song>
     <song>
-        <id>4</id>
         <songname>Four</songname>
         <artistname>John Coltrane</artistname>
         <songinfos>Une composition emblématique de John Coltrane, issue de l'album "A Love Supreme" (1965).</songinfos>
         <songurl>https://www.songfacts.com/facts/john-coltrane/four</songurl>
-        <added_at>1965-08-17</added_at>
-        <updated_at>2024-01-15</updated_at>
     </song>
 </songs>
 ```

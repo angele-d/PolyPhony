@@ -1,3 +1,48 @@
+
+# Project
+
+This project, named "Polyphony", is a web application built using the Laravel framework. It aims to provide a platform for users to interact through playlists to share and discover musics, artists, and song facts. The application is designed to be collaborative, allowing users to contribute to playlists and manage their content effectively.
+
+## First use of the Application
+
+To run the application, follow these steps:
+
+1. Clone the repository to your local machine.
+2. Navigate to the project directory.
+3. Install the dependencies using Composer:
+   ```bash
+   composer install
+   ```
+4. Set up your environment variables by copying the `.env.example` file to `.env`
+   ```bash
+    cp .env.example .env
+    ```
+5. Generate an application key:
+   ```bash
+   php artisan key:generate
+   ```
+6. Run the database migrations:
+   ```bash
+   php artisan migrate
+   ```
+
+
+## Running the application
+
+You'll need 2 parallel terminals to run the application:
+- The serveur PHP Artisan:
+  ```bash
+  php artisan serve
+  ```
+- The Vite / Tailwind CSS watcher:
+  ```bash
+  npm run dev
+  ```
+
+Now you can access the application in your web browser at `http://localhost:8000`.
+
+# Laravel Framework
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
@@ -40,14 +85,6 @@ php artisan boost:install
 ```
 
 Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
 
 ## Security Vulnerabilities
 

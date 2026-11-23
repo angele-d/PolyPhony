@@ -4,63 +4,67 @@ namespace App\Policies;
 
 use App\Models\Playlist;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class PlaylistPolicy
 {
     /**
-     * Determine whether the user can view any models.
+     * Check if the user is the creator / administrator of the playlist.
      */
-    public function viewAny(User $user): bool
+    private function isAdmin(User $user, Playlist $playlist): bool
     {
-        return false;
+        return (int) $playlist->administrator_id === (int) $user->id;
     }
 
     /**
-     * Determine whether the user can view the model.
+     * Check if the user is a contributor of the playlist.
+     */
+    private function isContributor(User $user, Playlist $playlist): bool
+    {
+        return $playlist->contributors()->where('user_id', $user->id)->exists();
+    }
+
+    /**
+     * Check if the user can view the playlist.
+     * For contributor and creator
      */
     public function view(User $user, Playlist $playlist): bool
     {
-        return false;
+        return $this->isAdmin($user, $playlist) || $this->isContributor($user, $playlist);
     }
 
     /**
-     * Determine whether the user can create models.
-     */
-    public function create(User $user): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can update the model.
+     * Check if the user can update the playlist.
+     * Only the creator / administrator can update the playlist.
      */
     public function update(User $user, Playlist $playlist): bool
     {
-        return false;
+        return $this->isAdmin($user, $playlist);
     }
 
     /**
-     * Determine whether the user can delete the model.
+     * Check if the user can delete the playlist
+     * Only the creator / administrator can delete the playlist.
      */
     public function delete(User $user, Playlist $playlist): bool
     {
-        return false;
+        return $this->isAdmin($user, $playlist);
     }
 
     /**
-     * Determine whether the user can restore the model.
+     * Invitation and removal of contributors
+     * Only the creator / administrator can manage contributors.
      */
-    public function restore(User $user, Playlist $playlist): bool
+    public function manageMembers(User $user, Playlist $playlist): bool
     {
-        return false;
+        return $this->isAdmin($user, $playlist);
     }
 
     /**
-     * Determine whether the user can permanently delete the model.
+     * Check if the user can contribute to the playlist. (adding, editing or deleting content: songs, singers, timelines, documents).
+     * For contributor and creator
      */
-    public function forceDelete(User $user, Playlist $playlist): bool
+    public function contribute(User $user, Playlist $playlist): bool
     {
-        return false;
+        return $this->isAdmin($user, $playlist) || $this->isContributor($user, $playlist);
     }
 }
