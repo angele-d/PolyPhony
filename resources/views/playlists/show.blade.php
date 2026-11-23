@@ -34,6 +34,18 @@
                     <span>👥 Équipe ({{ $playlist->contributors->count() + 1 }})</span>
                 </button>
 
+                {{-- Bouton Export SQL (.zip) --}}
+                @can('view', $playlist)
+                    <form action="{{ route('playlists.backup', $playlist) }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit"
+                                class="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-md text-sm font-semibold shadow-sm transition flex items-center gap-2"
+                                title="Exporter les données SQL de cette playlist (.txt dans un .zip)">
+                            <span>💾 Export SQL (.zip)</span>
+                        </button>
+                    </form>
+                @endcan
+
                 {{-- Bouton Paramètres (Administrateur uniquement, si routes update/destroy déclarées) --}}
                 @can('update', $playlist)
                     @if(Route::has('playlists.update') || Route::has('playlists.destroy'))

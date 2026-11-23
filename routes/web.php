@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BackupController;
 use App\Http\Controllers\PlaylistController;
 use App\Http\Controllers\PlaylistMemberController;
 use App\Http\Controllers\ProfileController;
@@ -53,5 +54,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('documents.download');
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])
         ->name('documents.destroy');
+
+    // ZIP download of the database backup
+    Route::post('/playlist/{playlist}/backup', [BackupController::class, 'download'])->name('playlists.backup');
 });
 require __DIR__.'/auth.php';
