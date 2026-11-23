@@ -36,6 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/search/songfacts', [SearchController::class, 'autocomplete'])->name('search.songfacts');
     // Adding scraped infos in the playlist
     Route::post('/playlists/{playlist}/songs/scraped', [SearchController::class, 'addScrapedInfos'])->name('playlists.songs.add-scraped');
+    Route::post('/playlists/{playlist}/songs/import-xml', [SongController::class, 'importXml'])->name('playlists.songs.import-xml');
     // Deleting elements from the playlist
     Route::delete('/songs/{song}', [SongController::class, 'destroy'])->name('songs.destroy');
     Route::delete('/singers/{singer}', [SingerController::class, 'destroy'])->name('singers.destroy');

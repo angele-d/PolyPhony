@@ -252,7 +252,7 @@
                 </div>
             @endif
 
-            {{-- Moteur de Recherche Intelligente Songfacts (Chanson / Artiste) : Administrateur et Contributeurs --}}
+            {{-- Moteur de Recherche Intelligente Songfacts (Chanson / Artiste) + Import XML --}}
             @can('contribute', $playlist)
                 <div class="bg-white p-6 shadow-sm sm:rounded-lg border-2 border-indigo-100" 
                     x-data="{
@@ -260,6 +260,7 @@
                         artist: '',
                         song: '',
                         loading: false,
+                        uploadingXml: false,
                         directData: null,
                         proposals: [],
                         errorMessage: '',
@@ -309,22 +310,56 @@
                     }">
                     
                     <h3 class="text-lg font-bold text-gray-800 mb-1">🔍 Recherche & Extraction Songfacts</h3>
-                    <p class="text-sm text-gray-500 mb-4">Choisissez ce que vous souhaitez rechercher puis remplissez les informations correspondantes.</p>
+                    <p class="text-sm text-gray-500 mb-4">Choisissez ce que vous souhaitez ajouter puis remplissez les informations correspondantes.</p>
 
-                    {{-- Radio Buttons pour le choix du type de recherche --}}
-                    <div class="flex items-center space-x-6 mb-4">
-                        <label class="inline-flex items-center cursor-pointer">
-                            <input type="radio" x-model="type" value="song" class="text-indigo-600 focus:ring-indigo-500">
-                            <span class="ml-2 text-sm font-semibold text-gray-700">Chanson</span>
-                        </label>
+                    {{-- Formulaire XML caché déclenché au clic sur la case "Importer XML" --}}
+                    <form x-ref="xmlForm"
+                          action="{{ route('playlists.songs.import-xml', $playlist) }}"
+                          method="POST"
+                          enctype="multipart/form-data"
+                          class="hidden">
+                        @csrf
+                        <input type="file"
+                               name="xml_file"
+                               accept=".xml,text/xml,application/xml"
+                               x-ref="xmlInput"
+                               @change="if ($event.target.files.length > 0) { uploadingXml = true; $refs.xmlForm.submit(); }">
+                    </form>
 
-                        <label class="inline-flex items-center cursor-pointer">
-                            <input type="radio" x-model="type" value="artist" @change="song = ''" class="text-indigo-600 focus:ring-indigo-500">
-                            <span class="ml-2 text-sm font-semibold text-gray-700">Artiste</span>
-                        </label>
+                    {{-- Radio Buttons (Chanson / Artiste) + Case Importer XML conditionnelle --}}
+                    <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+                        <div class="flex items-center space-x-6">
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="radio" x-model="type" value="song" class="text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm font-semibold text-gray-700">Chanson</span>
+                            </label>
+
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="radio" x-model="type" value="artist" @change="song = ''" class="text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm font-semibold text-gray-700">Artiste</span>
+                            </label>
+                        </div>
+
+                        {{-- Case cliquable visible uniquement lorsque "Chanson" est sélectionné --}}
+                        <button type="button"
+                                x-show="type === 'song'"
+                                @click="$refs.xmlInput.click()"
+                                :disabled="uploadingXml"
+                                class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-dashed border-amber-400 rounded-md text-xs font-bold shadow-sm transition cursor-pointer"
+                                title="Sélectionner un fichier songs.xml à importer">
+                            <span x-show="!uploadingXml">📄 Importer XML</span>
+                            <span x-show="uploadingXml">⏳ Importation en cours...</span>
+                        </button>
                     </div>
 
-                    {{-- Formulaire d'envoi synchrone --}}
+                    {{-- Affichage éventuel d'une erreur de validation sur le fichier XML --}}
+                    @error('xml_file')
+                        <div class="mb-3 p-2.5 bg-red-50 border border-red-200 rounded text-xs text-red-600 font-semibold">
+                            {{ $message }}
+                        </div>
+                    @enderror
+
+                    {{-- Formulaire d'envoi synchrone Songfacts --}}
                     <form @submit.prevent="search()" class="space-y-4">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
