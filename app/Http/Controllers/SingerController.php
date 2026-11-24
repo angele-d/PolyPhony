@@ -15,6 +15,8 @@ class SingerController extends Controller
         $singerName = $singer->singer_name;
         $singer->delete();
 
-        return back()->with('success', "L'artiste \"{$singerName}\" a été supprimé de la playlist.");
+        return back()->with('success', __('The artist ":name" has been deleted from the playlist.', [
+            'name' => $singerName,
+        ]));
     }
 }

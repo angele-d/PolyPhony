@@ -28,7 +28,9 @@ class BackupController extends Controller
         } catch (Throwable $e) {
             Log::error('Error during database backup : ' . $e->getMessage());
 
-            return back()->with('error', 'Failed to generate backup : ' . $e->getMessage());
+            return back()->with('error', __('Failed to generate backup: :message', [
+                'message' => $e->getMessage(),
+            ]));
         }
     }
 }

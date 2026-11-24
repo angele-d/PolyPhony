@@ -15,7 +15,7 @@
     "Playlist Name": "Playlist Name",
     "Cancel": "Cancel",
     "Create": "Create",
-    
+
     "Export SQL data of this playlist (.txt in a .zip)": "Export SQL data of this playlist (.txt in a .zip)",
     "example@domain.com": "example@domain.com",
     "Added on": "Added on",
@@ -84,5 +84,32 @@
     "No encrypted documents in this playlist yet.": "No encrypted documents in this playlist yet.",
     "The playlist information has been updated.": "The playlist information has been updated.",
     "The playlist has been deleted.": "The playlist has been deleted.",
-    ":count song(s) imported successfully from the XML file!": ":count song(s) imported successfully from the XML file!"
+    ":count song(s) imported successfully from the XML file!": ":count song(s) imported successfully from the XML file!",
+
+    "Failed to generate backup: :message": "Failed to generate backup: :message",
+    "Please select a file to upload.": "Please select a file to upload.",
+    "Only PDF, PNG, MP3 and JPG files are allowed.": "Only PDF, PNG, MP3 and JPG files are allowed.",
+    "The file must not exceed 20 MB.": "The file must not exceed 20 MB.",
+    "The file \":name\" has been encrypted and added to the playlist.": "The file \":name\" has been encrypted and added to the playlist.",
+    "The encrypted file could not be found on the server.": "The encrypted file could not be found on the server.",
+    "The file \":name\" has been deleted.": "The file \":name\" has been deleted.",
+    "Playlist created successfully.": "Playlist created successfully.",
+    "Playlist updated successfully.": "Playlist updated successfully.",
+    "Playlist deleted successfully.": "Playlist deleted successfully.",
+    "No user account is associated with this email address.": "No user account is associated with this email address.",
+    "You are already the administrator of this playlist.": "You are already the administrator of this playlist.",
+    ":name is already a contributor to this playlist.": ":name is already a contributor to this playlist.",
+    ":name has been added to the contributor team.": ":name has been added to the contributor team.",
+    ":name has been removed from the playlist.": ":name has been removed from the playlist.",
+    "Unable to retrieve information from Songfacts.": "Unable to retrieve information from Songfacts.",
+    "The artist profile \":name\" has been successfully extracted and added!": "The artist profile \":name\" has been successfully extracted and added!",
+    "The song \":name\" has been successfully extracted and added!": "The song \":name\" has been successfully extracted and added!",
+    "The artist \":name\" has been deleted from the playlist.": "The artist \":name\" has been deleted from the playlist.",
+    "Please select an XML file to import.": "Please select an XML file to import.",
+    "The file must have the .xml extension.": "The file must have the .xml extension.",
+    "The XML file must not exceed 5 MB.": "The XML file must not exceed 5 MB.",
+    "No valid songs were found in the XML file. Please ensure that the file contains <song> elements with both a title and an artist.": "No valid songs were found in the XML file. Please ensure that the file contains <song> elements with both a title and an artist.",
+    "(:count incomplete song(s) skipped due to missing title or artist.)": "(:count incomplete song(s) skipped due to missing title or artist.)",
+    "Error importing XML: :message": "Error importing XML: :message",
+    "The song \":name\" has been successfully deleted from the playlist.": "The song \":name\" has been successfully deleted from the playlist."
 }
