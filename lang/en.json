@@ -111,5 +111,17 @@
     "No valid songs were found in the XML file. Please ensure that the file contains <song> elements with both a title and an artist.": "No valid songs were found in the XML file. Please ensure that the file contains <song> elements with both a title and an artist.",
     "(:count incomplete song(s) skipped due to missing title or artist.)": "(:count incomplete song(s) skipped due to missing title or artist.)",
     "Error importing XML: :message": "Error importing XML: :message",
-    "The song \":name\" has been successfully deleted from the playlist.": "The song \":name\" has been successfully deleted from the playlist."
+    "The song \":name\" has been successfully deleted from the playlist.": "The song \":name\" has been successfully deleted from the playlist.",
+
+    "PHP extension 'zip' is not installed. Please install it to enable database backup functionality.": "PHP extension 'zip' is not installed. Please install it to enable database backup functionality.",
+    "Unable to write temporary backup file (.txt).": "Unable to write temporary backup file (.txt).",
+    "Unable to create backup ZIP archive.": "Unable to create backup ZIP archive.",
+    "The APP_KEY is missing in the configuration.": "The APP_KEY is missing in the configuration.",
+    "OpenSSL file encryption failed.": "OpenSSL file encryption failed.",
+    "Corrupted or invalid encrypted file.": "Corrupted or invalid encrypted file.",
+    "File integrity compromised (invalid HMAC).": "File integrity compromised (invalid HMAC).",
+    "OpenSSL file decryption failed.": "OpenSSL file decryption failed.",
+    "No data available": "No data available",
+    "The provided XML content is invalid or does not contain a <songs> root element.": "The provided XML content is invalid or does not contain a <songs> root element.",
+    "The provided XML content does not contain any <song> elements.": "The provided XML content does not contain any <song> elements."
 }

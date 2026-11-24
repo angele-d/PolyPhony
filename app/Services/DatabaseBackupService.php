@@ -21,7 +21,7 @@ class DatabaseBackupService
     public function generatePlaylistBackup(Playlist $playlist): string
     {
         if (!class_exists(ZipArchive::class)) {
-            throw new RuntimeException("PHP extension 'zip' is not installed. Please install it to enable database backup functionality.");
+            throw new RuntimeException(__("PHP extension 'zip' is not installed. Please install it to enable database backup functionality."));
         }
 
         $sqlDump  = "-- Save BDD PolyPhony — Playlist : {$playlist->playlist_name} (ID: {$playlist->id})\n";
@@ -63,14 +63,14 @@ class DatabaseBackupService
 
         // Write the raw SQL script into the .txt file
         if (file_put_contents($txtPath, $sqlDump) === false) {
-            throw new RuntimeException("Impossible d'écrire le fichier de sauvegarde temporaire (.txt).");
+            throw new RuntimeException(__('Unable to write temporary backup file (.txt).'));
         }
 
         // Create the ZIP archive and delete the temporary .txt file after archiving
         $zip = new ZipArchive();
         if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
             @unlink($txtPath);
-            throw new RuntimeException("Impossible de créer l'archive ZIP de sauvegarde.");
+            throw new RuntimeException(__('Unable to create backup ZIP archive.'));
         }
 
         $zip->addFile($txtPath, "{$fileName}.txt");

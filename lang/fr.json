@@ -111,5 +111,17 @@
     "No valid songs were found in the XML file. Please ensure that the file contains <song> elements with both a title and an artist.": "Aucune chanson valide n'a été trouvée dans le fichier XML. Vérifiez que le fichier contient des balises <song> avec un titre et un artiste.",
     "(:count incomplete song(s) skipped due to missing title or artist.)": "(:count chanson(s) incomplète(s) ignorée(s) en raison d'un titre ou d'un artiste manquant.)",
     "Error importing XML: :message": "Erreur lors de l'importation XML : :message",
-    "The song \":name\" has been successfully deleted from the playlist.": "La chanson « :name » a bien été supprimée de la playlist."
+    "The song \":name\" has been successfully deleted from the playlist.": "La chanson « :name » a bien été supprimée de la playlist.",
+
+    "PHP extension 'zip' is not installed. Please install it to enable database backup functionality.": "L'extension PHP 'zip' n'est pas installée. Veuillez l'installer pour activer la sauvegarde de la base de données.",
+    "Unable to write temporary backup file (.txt).": "Impossible d'écrire le fichier de sauvegarde temporaire (.txt).",
+    "Unable to create backup ZIP archive.": "Impossible de créer l'archive ZIP de sauvegarde.",
+    "The APP_KEY is missing in the configuration.": "La clé APP_KEY est manquante dans la configuration.",
+    "OpenSSL file encryption failed.": "Échec du chiffrement OpenSSL du fichier.",
+    "Corrupted or invalid encrypted file.": "Fichier chiffré corrompu ou invalide.",
+    "File integrity compromised (invalid HMAC).": "Intégrité du fichier compromise (HMAC invalide).",
+    "OpenSSL file decryption failed.": "Échec du déchiffrement OpenSSL du fichier.",
+    "No data available": "Aucune donnée disponible",
+    "The provided XML content is invalid or does not contain a <songs> root element.": "Le contenu XML fourni est invalide ou ne contient pas de balise racine <songs>.",
+    "The provided XML content does not contain any <song> elements.": "Le contenu XML fourni ne contient aucune balise <song>."
 }
