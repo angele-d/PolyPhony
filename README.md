@@ -27,7 +27,7 @@ To run the application, follow these steps:
    ```
 
 
-## Running the application
+## Running the application
 
 You'll need 2 parallel terminals to run the application:
 - The serveur PHP Artisan:
