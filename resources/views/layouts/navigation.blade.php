@@ -18,6 +18,20 @@
                 </div>
             </div>
 
+            <!-- Language Switcher (Desktop) -->
+            <div class="hidden sm:flex sm:items-center sm:ms-6">
+                <div class="inline-flex rounded-md shadow-sm border border-gray-200 overflow-hidden text-xs font-bold">
+                    <a href="{{ route('lang.switch', 'fr') }}"
+                    class="px-2.5 py-1.5 transition {{ app()->getLocale() === 'fr' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50' }}">
+                        FR
+                    </a>
+                    <a href="{{ route('lang.switch', 'en') }}"
+                    class="px-2.5 py-1.5 border-l border-gray-200 transition {{ app()->getLocale() === 'en' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50' }}">
+                        EN
+                    </a>
+                </div>
+            </div>
+
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 <x-dropdown align="right" width="48">
@@ -70,6 +84,19 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+        </div>
+
+        <!-- Language Switcher (Mobile) -->
+        <div class="px-4 py-2 border-t border-gray-200 flex items-center gap-2">
+            <span class="text-xs font-semibold text-gray-500 uppercase">{{ __('Language') }} :</span>
+            <a href="{{ route('lang.switch', 'fr') }}"
+            class="px-2.5 py-1 rounded text-xs font-bold {{ app()->getLocale() === 'fr' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700' }}">
+                FR
+            </a>
+            <a href="{{ route('lang.switch', 'en') }}"
+            class="px-2.5 py-1 rounded text-xs font-bold {{ app()->getLocale() === 'en' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700' }}">
+                EN
+            </a>
         </div>
 
         <!-- Responsive Settings Options -->
