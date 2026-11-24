@@ -33,7 +33,7 @@ class SearchController extends Controller
     }
 
     /**
-     * Add a scraped infos in the specified playlist
+     * Add scraped infos in the specified playlist
      */
     public function addScrapedInfos(Request $request, Playlist $playlist)
     {
@@ -47,18 +47,20 @@ class SearchController extends Controller
         $segments = array_values(array_filter(explode('/', $path ?? '')));
 
         // Case 1: URL format is /facts/artist-slug -> Singer
-        if(count($segments) === 2 && $segments[0] === 'facts') {
+        if (count($segments) === 2 && $segments[0] === 'facts') {
             $singerService = new SingerService($this->scraper);
             $singerService->playlist_id = $playlist->id;
             $singerService->create($request->source_url);
 
             if (empty($singerService->singer_name)) {
-                return back()->with('error', 'Impossible de récupérer les informations depuis Songfacts.');
+                return back()->with('error', __('Unable to retrieve information from Songfacts.'));
             }
 
             $singerService->save();
 
-            return back()->with('success', "La fiche de l'artiste \"{$singerService->singer_name}\" a été extraite et ajoutée avec succès !");
+            return back()->with('success', __('The artist profile ":name" has been successfully extracted and added!', [
+                'name' => $singerService->singer_name,
+            ]));
         }
 
         // Case 2: URL format is /facts/artist-slug/song-slug -> Song
@@ -67,11 +69,13 @@ class SearchController extends Controller
         $songService->create($request->source_url);
 
         if (empty($songService->song_name)) {
-            return back()->with('error', 'Impossible de récupérer les informations depuis Songfacts.');
+            return back()->with('error', __('Unable to retrieve information from Songfacts.'));
         }
 
         $songService->save();
 
-        return back()->with('success', "Le morceau \"{$songService->song_name}\" a été extrait et ajouté avec succès !");
+        return back()->with('success', __('The song ":name" has been successfully extracted and added!', [
+            'name' => $songService->song_name,
+        ]));
     }
 }

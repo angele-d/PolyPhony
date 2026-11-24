@@ -94,7 +94,7 @@ class SongfactsScraper{
         $data = [
             'song_name'   => $title,
             'artist_name' => Str::title(str_replace('-', ' ', $artistSlug)),
-            'song_infos'  => $formattedInfos ?: 'No data available',
+            'song_infos'  => $formattedInfos ?: __('No data available'),
             'source_url'  => $url,
         ];
 
@@ -167,7 +167,7 @@ class SongfactsScraper{
             'type'        => 'artist',
             'singer_name' => $artistTitle,
             'artist_name' => $artistTitle, // Utile pour l'aperçu Alpine.js
-            'bio_summary' => $formattedInfos ?: 'Aucune anecdote disponible pour cet artiste.',
+            'bio_summary' => $formattedInfos ?: __('No trivia available for this artist.'),
             'picture_url' => $pictureUrl,
             'source_url'  => $url,
         ];

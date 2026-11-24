@@ -10,6 +10,7 @@ use App\Http\Controllers\SingerController;
 use App\Http\Controllers\DocumentController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Session;
 
 Route::get('/', function () {
     // If the user is authenticated, redirect to dashboard, else show welcome page
@@ -18,6 +19,14 @@ Route::get('/', function () {
     }
     return view('welcome');
 });
+
+// Language changement
+Route::get('/lang/{locale}', function (string $locale) {
+    if(in_array($locale, ['fr', 'en'])) {
+        Session::put('locale', $locale);
+    }
+    return back();
+})->name('lang.switch');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard = Playlists index

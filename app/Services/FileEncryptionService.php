@@ -23,7 +23,7 @@ class FileEncryptionService
         }
 
         if (empty($appKey)) {
-            throw new RuntimeException('La clé APP_KEY est manquante dans la configuration.');
+            throw new RuntimeException(__('The APP_KEY is missing in the configuration.'));
         }
 
         return hash('sha256', $appKey, true);
@@ -47,7 +47,7 @@ class FileEncryptionService
         );
 
         if ($cipherText === false) {
-            throw new RuntimeException('Échec du chiffrement OpenSSL du fichier.');
+            throw new RuntimeException(__('OpenSSL file encryption failed.'));
         }
 
         // Signature HMAC pour vérifier que le fichier chiffré n'a pas été altéré
@@ -66,7 +66,7 @@ class FileEncryptionService
         $hmacLength = 32; // SHA-256 produit 32 octets
 
         if (strlen($encryptedPayload) <= ($hmacLength + $ivLength)) {
-            throw new RuntimeException('Fichier chiffré corrompu ou invalide.');
+            throw new RuntimeException(__('Corrupted or invalid encrypted file.'));
         }
 
         $hmac = substr($encryptedPayload, 0, $hmacLength);
@@ -76,7 +76,7 @@ class FileEncryptionService
         // Vérification de l'intégrité avant déchiffrement
         $expectedHmac = hash_hmac('sha256', $iv . $cipherText, $key, true);
         if (!hash_equals($expectedHmac, $hmac)) {
-            throw new RuntimeException('Intégrité du fichier compromise (HMAC invalide).');
+            throw new RuntimeException(__('File integrity compromised (invalid HMAC).'));
         }
 
         $plainContent = openssl_decrypt(
@@ -88,7 +88,7 @@ class FileEncryptionService
         );
 
         if ($plainContent === false) {
-            throw new RuntimeException('Échec du déchiffrement OpenSSL du fichier.');
+            throw new RuntimeException(__('OpenSSL file decryption failed.'));
         }
 
         return $plainContent;

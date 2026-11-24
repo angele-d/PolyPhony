@@ -26,9 +26,9 @@ class DocumentController extends Controller
         $request->validate([
             'document' => ['required', 'file', 'mimes:pdf,png,mp3,jpg', 'max:20480'], // Max 20 Mo
         ], [
-            'document.required' => 'Veuillez sélectionner un fichier à importer.',
-            'document.mimes'    => 'Seuls les fichiers PDF, PNG, MP3 et JPG sont autorisés.',
-            'document.max'      => 'Le fichier ne doit pas dépasser 20 Mo.',
+            'document.required' => __('Please select a file to upload.'),
+            'document.mimes'    => __('Only PDF, PNG, MP3 and JPG files are allowed.'),
+            'document.max'      => __('The file must not exceed 20 MB.'),
         ]);
 
         $file = $request->file('document');
@@ -59,7 +59,9 @@ class DocumentController extends Controller
             'mime_type'      => $mimeType,
         ]);
 
-        return back()->with('success', "Le fichier \"{$originalName}\" a été chiffré et ajouté à la playlist.");
+        return back()->with('success', __('The file ":name" has been encrypted and added to the playlist.', [
+            'name' => $originalName,
+        ]));
     }
 
     /**
@@ -70,7 +72,7 @@ class DocumentController extends Controller
         Gate::authorize('view', $document->playlist);
 
         if (!Storage::disk('local')->exists($document->encrypted_path)) {
-            abort(404, 'Le fichier chiffré est introuvable sur le serveur.');
+            abort(404, __('The encrypted file could not be found on the server.'));
         }
 
         $encryptedPayload = Storage::disk('local')->get($document->encrypted_path);
@@ -102,6 +104,8 @@ class DocumentController extends Controller
         $name = $document->original_name;
         $document->delete();
 
-        return back()->with('success', "Le fichier \"{$name}\" a été supprimé.");
+        return back()->with('success', __('The file ":name" has been deleted.', [
+            'name' => $name,
+        ]));
     }
 }

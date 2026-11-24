@@ -10,7 +10,7 @@ use SimpleXMLElement;
 class XmlSongImportService
 {
     /**
-     * Parse a XML content in the format <songs><song>...</song></songs>
+     * Parse an XML content in the format <songs><song>...</song></songs>
      * and adds valid songs to the target playlist.
      * @param string $xmlContent The XML content to parse
      * @param Playlist $playlist The target playlist to add songs to
@@ -29,11 +29,11 @@ class XmlSongImportService
 
         if ($xml === false || $xml->getName() !== 'songs') {
             libxml_clear_errors();
-            throw new RuntimeException('The provided XML content is invalid or does not contain a <songs> root element.');
+            throw new RuntimeException(__('The provided XML content is invalid or does not contain a <songs> root element.'));
         }
 
         if (count($xml->song) === 0) {
-            throw new RuntimeException('The provided XML content does not contain any <song> elements.');
+            throw new RuntimeException(__('The provided XML content does not contain any <song> elements.'));
         }
 
         $imported = 0;
@@ -59,7 +59,7 @@ class XmlSongImportService
             // Coherent formatting with the bullet point display in the playlist
             $formattedInfos = $rawInfos !== ''
                 ? '• ' . preg_replace('/\s+/', ' ', $rawInfos)
-                : 'No data available';
+                : __('No data available');
 
             Song::create([
                 'playlist_id' => $playlist->id,

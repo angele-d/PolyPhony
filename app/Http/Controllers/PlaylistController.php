@@ -49,14 +49,11 @@ class PlaylistController extends Controller
         $user = Auth::user();
         $user->playlists()->create($validated);
 
-        return redirect()->route('playlists.index')->with('success', 'Playlist created successfully.');
+        return redirect()->route('playlists.index')->with('success', __('Playlist created successfully.'));
     }
 
     public function show(Playlist $playlist){
         // Ensure the user has access to the playlist
-        /*if ($playlist->administrator_id !== Auth::id() && !$playlist->contributors->contains(Auth::id())) {
-            abort(403, 'Unauthorized action.');
-        }*/
         Gate::authorize('view', $playlist); 
 
         $playlist->load(['administrator', 'contributors', 'songs', 'singers', 'timelines','documents']);
@@ -73,7 +70,7 @@ class PlaylistController extends Controller
 
         $playlist->update($validated);
 
-        return redirect()->route('playlists.show', $playlist)->with('success', 'Playlist updated successfully.');
+        return redirect()->route('playlists.show', $playlist)->with('success', __('Playlist updated successfully.'));
     }
 
     public function destroy(Playlist $playlist){
@@ -81,6 +78,6 @@ class PlaylistController extends Controller
 
         $playlist->delete();
 
-        return redirect()->route('playlists.index')->with('success', 'Playlist deleted successfully.');
+        return redirect()->route('playlists.index')->with('success', __('Playlist deleted successfully.'));
     }
 }
